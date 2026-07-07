@@ -1,0 +1,145 @@
+### Health
+GET http://localhost:3000/api/health
+
+### Google login with idToken
+POST http://localhost:3000/api/auth/login
+Content-Type: application/json
+
+{
+  "idToken": "google_id_token"
+}
+
+### Signup with mock social ID
+POST http://localhost:3000/api/auth/signup
+Content-Type: application/json
+
+{
+  "provider": "GOOGLE",
+  "socialId": "demo-google-user-1"
+}
+
+### Set profile
+POST http://localhost:3000/api/users/profile
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "nickname": "JungTem",
+  "factionId": 1
+}
+
+### List factions
+GET http://localhost:3000/api/factions
+Authorization: Bearer {{accessToken}}
+
+### Create faction
+POST http://localhost:3000/api/factions
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "name": "BlueDragon",
+  "color": "#2196F3",
+  "joinType": "FREE",
+  "description": "독서를 사랑하는 진영"
+}
+
+### Get my profile
+GET http://localhost:3000/api/users/me
+Authorization: Bearer {{accessToken}}
+
+### Nearby libraries
+GET http://localhost:3000/api/libraries?latitude=37.5665&longitude=126.9780&radius=5000
+Authorization: Bearer {{accessToken}}
+
+### Library detail
+GET http://localhost:3000/api/libraries/1
+Authorization: Bearer {{accessToken}}
+
+### Nationwide libraries from Library Info API
+GET http://localhost:3000/api/libraries/nationwide?pageNo=1&pageSize=100
+Authorization: Bearer {{accessToken}}
+
+### Nearby libraries from Kakao Local API
+GET http://localhost:3000/api/libraries/nearby/search?lat=37.5665&lng=126.9780&radiusMeters=5000
+Authorization: Bearer {{accessToken}}
+
+### Geocode address with Kakao Local API
+GET http://localhost:3000/api/libraries/geocode?address=서울특별시 중구 세종대로 110
+Authorization: Bearer {{accessToken}}
+
+### Sync libraries from Library Info API
+POST http://localhost:3000/api/libraries/sync?pageNo=1&pageSize=30
+Authorization: Bearer {{accessToken}}
+
+### Resolve book by ISBN
+GET http://localhost:3000/api/books/isbn/9788954682152
+Authorization: Bearer {{accessToken}}
+
+### Check book existence in a library
+GET http://localhost:3000/api/books/isbn/9788954682152/exist?libCode=111000
+Authorization: Bearer {{accessToken}}
+
+### Recommended books
+GET http://localhost:3000/api/books/recommendations?keyword=문학&pageNo=1&pageSize=20
+Authorization: Bearer {{accessToken}}
+
+### Start reading session
+POST http://localhost:3000/api/sessions/start
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "libraryId": 1,
+  "isbn": "9788954682152"
+}
+
+### Ping location
+POST http://localhost:3000/api/sessions/ping
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "sessionId": 1,
+  "latitude": 37.5665,
+  "longitude": 126.9780
+}
+
+### Complete reading session
+POST http://localhost:3000/api/sessions/complete
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "sessionId": 1,
+  "startPage": 15,
+  "endPage": 72
+}
+
+### Verify book cover image
+POST http://localhost:3000/api/verify/vision
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "sessionId": 1,
+  "image": "base64..."
+}
+
+### Verify review text
+POST http://localhost:3000/api/verify/llm
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "sessionId": 1,
+  "review": "책을 읽고 인물의 선택과 갈등이 인상 깊었다. 특히 이야기의 전개가 주제와 연결되는 방식이 좋았다."
+}
+
+### User ranking
+GET http://localhost:3000/api/ranking/users
+Authorization: Bearer {{accessToken}}
+
+### Faction ranking
+GET http://localhost:3000/api/ranking/factions
+Authorization: Bearer {{accessToken}}
