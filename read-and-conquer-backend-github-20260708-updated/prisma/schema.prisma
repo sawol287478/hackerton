@@ -1,0 +1,263 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum SocialProvider {
+  KAKAO
+  NAVER
+  GOOGLE
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum ReadingSessionStatus {
+  IN_PROGRESS
+  READY_TO_VERIFY
+  SUBMITTED
+  VERIFICATION_PASSED
+  VERIFICATION_FAILED
+  CANCELED
+}
+
+enum LocationLogStatus {
+  NORMAL
+  WARNING
+  OUT_OF_RANGE
+}
+
+enum InfluenceActionType {
+  INFLUENCE_GAINED
+  OCCUPATION_CHANGED
+  OCCUPATION_MAINTAINED
+}
+
+model Faction {
+  factionId       Int                @id @default(autoincrement()) @map("faction_id")
+  factionName     String             @unique @map("faction_name") @db.VarChar(50)
+  factionColor    String             @map("faction_color") @db.VarChar(20)
+  joinType        String             @default("FREE") @map("join_type") @db.VarChar(20)
+  description     String?            @db.VarChar(255)
+  createdByUserId Int?               @map("created_by_user_id")
+  isActive        Boolean            @default(true) @map("is_active")
+  totalScore      Int                @default(0) @map("total_score")
+  createdAt       DateTime           @default(now()) @map("created_at")
+  updatedAt       DateTime           @updatedAt @map("updated_at")
+  users           User[]             @relation("UserFaction")
+  createdLibraries Library[]         @relation("CurrentOccupiedFaction")
+  influences      LibraryInfluence[]
+  influenceLogs   InfluenceLog[]
+  userRankings    UserRanking[]
+  factionRankings FactionRanking[]
+
+  @@map("factions")
+}
+
+model User {
+  userId              Int              @id @default(autoincrement()) @map("user_id")
+  socialProvider      SocialProvider   @map("social_provider")
+  socialId            String           @map("social_id") @db.VarChar(120)
+  email               String?          @db.VarChar(120)
+  name                String?          @db.VarChar(100)
+  nickname            String?          @unique @db.VarChar(30)
+  factionId           Int?             @map("faction_id")
+  exp                 Int              @default(0)
+  role                UserRole         @default(USER)
+  onboardingCompleted Boolean          @default(false) @map("onboarding_completed")
+  lastLoginAt         DateTime?        @map("last_login_at")
+  createdAt           DateTime         @default(now()) @map("created_at")
+  updatedAt           DateTime         @updatedAt @map("updated_at")
+  faction             Faction?         @relation("UserFaction", fields: [factionId], references: [factionId])
+  sessions            ReadingSession[]
+  influenceLogs       InfluenceLog[]
+  ranking             UserRanking?
+
+  @@unique([socialProvider, socialId])
+  @@map("users")
+}
+
+model Library {
+  libraryId                Int                @id @default(autoincrement()) @map("library_id")
+  externalLibraryCode      String?            @unique @map("external_library_code") @db.VarChar(40)
+  libraryName              String             @map("library_name") @db.VarChar(120)
+  address                  String             @db.VarChar(255)
+  latitude                 Float
+  longitude                Float
+  region                   String             @db.VarChar(80)
+  phone                    String?            @db.VarChar(40)
+  homepageUrl              String?            @map("homepage_url") @db.VarChar(500)
+  operatingHours           String?            @map("operating_hours") @db.VarChar(120)
+  closedDays               String?            @map("closed_days") @db.VarChar(120)
+  currentOccupiedFactionId Int?               @map("current_occupied_faction_id")
+  createdAt                DateTime           @default(now()) @map("created_at")
+  updatedAt                DateTime           @updatedAt @map("updated_at")
+  currentOccupiedFaction   Faction?           @relation("CurrentOccupiedFaction", fields: [currentOccupiedFactionId], references: [factionId])
+  influences               LibraryInfluence[]
+  sessions                 ReadingSession[]
+  influenceLogs            InfluenceLog[]
+
+  @@index([latitude, longitude])
+  @@unique([libraryName, address])
+  @@map("libraries")
+}
+
+model LibraryInfluence {
+  influenceId       Int      @id @default(autoincrement()) @map("influence_id")
+  libraryId         Int      @map("library_id")
+  factionId         Int      @map("faction_id")
+  influenceScore    Int      @default(0) @map("influence_score")
+  lastContributedAt DateTime? @map("last_contributed_at")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+  library           Library  @relation(fields: [libraryId], references: [libraryId], onDelete: Cascade)
+  faction           Faction  @relation(fields: [factionId], references: [factionId])
+
+  @@unique([libraryId, factionId])
+  @@map("library_influences")
+}
+
+model Book {
+  bookId        Int              @id @default(autoincrement()) @map("book_id")
+  isbn          String           @unique @db.VarChar(20)
+  title         String           @db.VarChar(200)
+  author        String?          @db.VarChar(120)
+  publisher     String?          @db.VarChar(120)
+  coverImageUrl String?          @map("cover_image_url") @db.VarChar(500)
+  totalPages    Int?             @map("total_pages")
+  description   String?          @db.Text
+  externalSource String?         @default("DATA4LIBRARY") @map("external_source") @db.VarChar(40)
+  createdAt     DateTime         @default(now()) @map("created_at")
+  updatedAt     DateTime         @updatedAt @map("updated_at")
+  sessions      ReadingSession[]
+
+  @@map("books")
+}
+
+model ReadingSession {
+  sessionId            Int                  @id @default(autoincrement()) @map("session_id")
+  userId               Int                  @map("user_id")
+  factionId            Int?                 @map("faction_id")
+  libraryId            Int                  @map("library_id")
+  bookId               Int                  @map("book_id")
+  startTime            DateTime             @default(now()) @map("start_time")
+  endTime              DateTime?            @map("end_time")
+  durationMinutes      Int?                 @map("duration_minutes")
+  startPage            Int?                 @map("start_page")
+  endPage              Int?                 @map("end_page")
+  isMinimumTimeMet     Boolean              @default(false) @map("is_minimum_time_met")
+  isLocationValid      Boolean              @default(true) @map("is_location_valid")
+  status               ReadingSessionStatus @default(IN_PROGRESS)
+  failReason           String?              @map("fail_reason") @db.VarChar(255)
+  submittedAt          DateTime?            @map("submitted_at")
+  completedAt          DateTime?            @map("completed_at")
+  createdAt            DateTime             @default(now()) @map("created_at")
+  updatedAt            DateTime             @updatedAt @map("updated_at")
+  user                 User                 @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  library              Library              @relation(fields: [libraryId], references: [libraryId])
+  book                 Book                 @relation(fields: [bookId], references: [bookId])
+  locationLogs         LocationLog[]
+  aiVerification       AiVerification?
+  influenceLogs        InfluenceLog[]
+
+  @@index([userId, status])
+  @@map("reading_sessions")
+}
+
+model LocationLog {
+  locationLogId       Int               @id @default(autoincrement()) @map("location_log_id")
+  sessionId           Int               @map("session_id")
+  latitude            Float
+  longitude           Float
+  accuracyMeters      Float?            @map("accuracy_meters")
+  distanceFromLibrary Float             @map("distance_from_library")
+  isOutOfRange        Boolean           @default(false) @map("is_out_of_range")
+  status              LocationLogStatus
+  checkedAt           DateTime          @default(now()) @map("checked_at")
+  session             ReadingSession    @relation(fields: [sessionId], references: [sessionId], onDelete: Cascade)
+
+  @@index([sessionId, checkedAt])
+  @@map("location_logs")
+}
+
+model AiVerification {
+  verificationId             Int            @id @default(autoincrement()) @map("verification_id")
+  sessionId                  Int            @unique @map("session_id")
+  submittedCoverImageUrl     String?        @map("submitted_cover_image_url") @db.VarChar(500)
+  registeredCoverImageUrl    String?        @map("registered_cover_image_url") @db.VarChar(500)
+  reviewText                 String?        @map("review_text") @db.VarChar(500)
+  visionConfidence           Float          @default(0) @map("vision_confidence")
+  llmConfidence              Float          @default(0) @map("llm_confidence")
+  visionPassed               Boolean        @default(false) @map("vision_passed")
+  llmPassed                  Boolean        @default(false) @map("llm_passed")
+  pageValidationPassed       Boolean        @default(false) @map("page_validation_passed")
+  locationValidationPassed   Boolean        @default(false) @map("location_validation_passed")
+  isPassed                   Boolean        @default(false) @map("is_passed")
+  failReason                 String?        @map("fail_reason") @db.VarChar(255)
+  modelName                  String?        @map("model_name") @db.VarChar(80)
+  verifiedAt                 DateTime?      @map("verified_at")
+  createdAt                  DateTime       @default(now()) @map("created_at")
+  session                    ReadingSession @relation(fields: [sessionId], references: [sessionId], onDelete: Cascade)
+
+  @@map("ai_verifications")
+}
+
+model InfluenceLog {
+  logId                      Int                 @id @default(autoincrement()) @map("log_id")
+  userId                     Int                 @map("user_id")
+  libraryId                  Int                 @map("library_id")
+  factionId                  Int                 @map("faction_id")
+  sessionId                  Int                 @map("session_id")
+  scoreDelta                 Int                 @map("score_delta")
+  influenceBefore            Int                 @map("influence_before")
+  influenceAfter             Int                 @map("influence_after")
+  previousOccupiedFactionId  Int?                @map("previous_occupied_faction_id")
+  newOccupiedFactionId       Int?                @map("new_occupied_faction_id")
+  isOccupationChanged        Boolean             @default(false) @map("is_occupation_changed")
+  actionType                 InfluenceActionType @map("action_type")
+  createdAt                  DateTime            @default(now()) @map("created_at")
+  user                       User                @relation(fields: [userId], references: [userId])
+  library                    Library             @relation(fields: [libraryId], references: [libraryId])
+  faction                    Faction             @relation(fields: [factionId], references: [factionId])
+  session                    ReadingSession      @relation(fields: [sessionId], references: [sessionId])
+
+  @@index([libraryId, createdAt])
+  @@map("influence_logs")
+}
+
+model UserRanking {
+  rankingId     Int      @id @default(autoincrement()) @map("ranking_id")
+  userId        Int      @unique @map("user_id")
+  factionId     Int      @map("faction_id")
+  totalExp      Int      @map("total_exp")
+  totalBooks    Int      @default(0) @map("total_books")
+  totalSessions Int      @default(0) @map("total_sessions")
+  rankPosition  Int      @map("rank_position")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+  user          User     @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  faction       Faction  @relation(fields: [factionId], references: [factionId])
+
+  @@index([rankPosition])
+  @@map("user_rankings")
+}
+
+model FactionRanking {
+  rankingId            Int      @id @default(autoincrement()) @map("ranking_id")
+  factionId            Int      @map("faction_id")
+  totalInfluence       Int      @default(0) @map("total_influence")
+  occupiedLibraryCount Int      @default(0) @map("occupied_library_count")
+  rankPosition         Int      @map("rank_position")
+  updatedAt            DateTime @updatedAt @map("updated_at")
+  faction              Faction  @relation(fields: [factionId], references: [factionId])
+
+  @@unique([factionId])
+  @@index([rankPosition])
+  @@map("faction_rankings")
+}

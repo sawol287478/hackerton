@@ -1,0 +1,195 @@
+### Health
+GET http://localhost:3000/api/health
+
+### 1.1 Google login with idToken
+POST http://localhost:3000/api/auth/login
+Content-Type: application/json
+
+{
+  "idToken": "google_id_token"
+}
+
+### Refresh token
+POST http://localhost:3000/api/auth/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "{{refreshToken}}"
+}
+
+### Logout
+POST http://localhost:3000/api/auth/logout
+
+### Signup with mock social ID
+POST http://localhost:3000/api/auth/signup
+Content-Type: application/json
+
+{
+  "provider": "GOOGLE",
+  "socialId": "demo-google-user-1"
+}
+
+### 2.1 Set profile
+POST http://localhost:3000/api/users/profile
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "nickname": "JungTem",
+  "factionId": 1
+}
+
+### 2.2 Get my profile
+GET http://localhost:3000/api/users/me
+Authorization: Bearer {{accessToken}}
+
+### Check nickname
+GET http://localhost:3000/api/users/check-nickname?nickname=JungTem
+Authorization: Bearer {{accessToken}}
+
+### My books
+GET http://localhost:3000/api/users/me/books?page=1&size=20
+Authorization: Bearer {{accessToken}}
+
+### My sessions
+GET http://localhost:3000/api/users/me/sessions?page=1&size=20
+Authorization: Bearer {{accessToken}}
+
+### My contributed libraries
+GET http://localhost:3000/api/users/me/libraries
+Authorization: Bearer {{accessToken}}
+
+### 3.1 List factions
+GET http://localhost:3000/api/factions
+Authorization: Bearer {{accessToken}}
+
+### 3.2 Create faction
+POST http://localhost:3000/api/factions
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "name": "BlueDragon",
+  "color": "#2196F3",
+  "joinType": "FREE",
+  "description": "독서를 사랑하는 진영"
+}
+
+### 4.1 Nearby libraries
+GET http://localhost:3000/api/libraries?latitude=37.5665&longitude=126.9780&radius=5000
+Authorization: Bearer {{accessToken}}
+
+### 4.2 Library detail
+GET http://localhost:3000/api/libraries/1
+Authorization: Bearer {{accessToken}}
+
+### Nationwide libraries from Library Info API
+GET http://localhost:3000/api/libraries/nationwide?pageNo=1&pageSize=100
+Authorization: Bearer {{accessToken}}
+
+### Nearby libraries from Kakao Local API
+GET http://localhost:3000/api/libraries/nearby/search?latitude=37.5665&longitude=126.9780&radius=5000
+Authorization: Bearer {{accessToken}}
+
+### Geocode address with Kakao Local API
+GET http://localhost:3000/api/libraries/geocode?address=서울특별시 중구 세종대로 110
+Authorization: Bearer {{accessToken}}
+
+### Sync libraries from Library Info API
+POST http://localhost:3000/api/libraries/sync?pageNo=1&pageSize=30
+Authorization: Bearer {{accessToken}}
+
+### Resolve book by ISBN
+GET http://localhost:3000/api/books/isbn/9788954682152
+Authorization: Bearer {{accessToken}}
+
+### Check book existence in a library
+GET http://localhost:3000/api/books/isbn/9788954682152/exist?libCode=111000
+Authorization: Bearer {{accessToken}}
+
+### Recommended books
+GET http://localhost:3000/api/books/recommendations?keyword=문학&pageNo=1&pageSize=20
+Authorization: Bearer {{accessToken}}
+
+### 5.1 Start reading session
+POST http://localhost:3000/api/sessions/start
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "libraryId": 1,
+  "isbn": "9788954682152",
+  "latitude": 37.5665,
+  "longitude": 126.9780
+}
+
+### 5.2 Ping location
+POST http://localhost:3000/api/sessions/ping
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "sessionId": 1,
+  "latitude": 37.5665,
+  "longitude": 126.9780,
+  "accuracyMeters": 15
+}
+
+### Submit verification material
+POST http://localhost:3000/api/sessions/1/submit
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "startPage": 15,
+  "endPage": 72,
+  "submittedCoverImageUrl": "https://example.com/cover.jpg",
+  "reviewText": "책을 읽고 인물의 선택과 갈등이 인상 깊었다. 특히 이야기의 전개가 주제와 연결되는 방식이 좋았다."
+}
+
+### 6.1 Verify book cover image
+POST http://localhost:3000/api/verify/vision
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "sessionId": 1,
+  "submittedCoverImageUrl": "https://example.com/cover.jpg"
+}
+
+### 6.2 Verify review text
+POST http://localhost:3000/api/verify/llm
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "sessionId": 1,
+  "reviewText": "책을 읽고 인물의 선택과 갈등이 인상 깊었다. 특히 이야기의 전개가 주제와 연결되는 방식이 좋았다."
+}
+
+### Get AI verification result
+GET http://localhost:3000/api/verify/1
+Authorization: Bearer {{accessToken}}
+
+### 7 Complete reading session and grant reward - current route
+POST http://localhost:3000/api/sessions/1/complete
+Authorization: Bearer {{accessToken}}
+
+### 7 Complete reading session and grant reward - compatibility route
+POST http://localhost:3000/api/sessions/complete
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "sessionId": 1,
+  "startPage": 15,
+  "endPage": 72
+}
+
+### 8.1 User ranking
+GET http://localhost:3000/api/ranking/users
+Authorization: Bearer {{accessToken}}
+
+### 8.2 Faction ranking
+GET http://localhost:3000/api/ranking/factions
+Authorization: Bearer {{accessToken}}
